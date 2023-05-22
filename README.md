@@ -8,16 +8,12 @@ Golang connection load balancer for master slave replication. It assumes a singl
 bl := dbalancer.NewDBalancer(db, rep, rep2)
 defer bl.Close()
 
-// Optional configuration
+// Optional configuration for all databases
 bl.SetMaxOpenConns(100)
 bl.SetMaxIdleConns(50)
 
-c, _ := bl.ReadConn(ctx)
-// read with conn, will balance between master, and replicas
-defer c.Close()
+db := bl.ReadDB() // will balance between master, and replicas
 
-c, _ = bl.WriteConn(ctx)
-// write with conn
-defer c.Close()
+db = bl.WriteDB() // returns master db
 
 ```
