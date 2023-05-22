@@ -1,7 +1,6 @@
 package dbalancer
 
 import (
-	"context"
 	"database/sql"
 	"sync/atomic"
 )
@@ -29,20 +28,15 @@ func (b *DBalancer) AddReadReplica(r *sql.DB) {
 	b.rrs = append(b.rrs, r)
 }
 
-// Master returns the master DB
-func (b *DBalancer) Master() *sql.DB {
-	return b.master
-}
-
-// GetReadConn returns a read connection from the DBalancer using round robin load balancing
-func (b *DBalancer) ReadConn(ctx context.Context) (*sql.Conn, error) {
+// ReadDB returns a read replica DB
+func (b *DBalancer) ReadDB() *sql.DB {
 	n := atomic.AddUint32(&b.next, 1)
-	return b.rrs[(int(n)-1)%len(b.rrs)].Conn(ctx)
+	return b.rrs[(int(n)-1)%len(b.rrs)]
 }
 
-// GetWriteConn returns a write connection from the DBalancer
-func (b *DBalancer) WriteConn(ctx context.Context) (*sql.Conn, error) {
-	return b.master.Conn(ctx)
+// WriteDB returns the master DB
+func (b *DBalancer) WriteDB() *sql.DB {
+	return b.master
 }
 
 // SetMaxOpenConns sets the maximum number of open connections to the master and read replicas

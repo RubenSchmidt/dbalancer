@@ -13,6 +13,22 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestBalancerRoundRobin(t *testing.T) {
+	db := sql.DB{}
+	rep1 := sql.DB{}
+	rep2 := sql.DB{}
+	bl := dbalancer.NewDBalancer(&db, &rep1, &rep2)
+
+	dbPtr := &db
+	rep1Ptr := &rep1
+	rep2Ptr := &rep2
+
+	require.True(t, bl.ReadDB() == rep1Ptr)
+	require.True(t, bl.ReadDB() == rep2Ptr)
+	require.True(t, bl.ReadDB() == dbPtr)
+	require.True(t, bl.WriteDB() == dbPtr)
+}
+
 func BenchmarkBalancer(b *testing.B) {
 	ctx := context.TODO()
 	db, err := sql.Open("pgx", "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
@@ -38,7 +54,7 @@ func BenchmarkBalancer(b *testing.B) {
 		g := errgroup.Group{}
 		for i := 0; i < 1000; i++ {
 			g.Go(func() error {
-				c, err := bl.ReadConn(ctx)
+				c, err := bl.ReadDB().Conn(ctx)
 				if err != nil {
 					panic(err)
 				}
